@@ -1,4 +1,5 @@
 from django.db import models
+from users.models import CustomUser
 
 class Customer(models.Model):
     created = models.DateTimeField(auto_now_add=True)
@@ -12,10 +13,7 @@ class Customer(models.Model):
     poc = models.CharField(max_length=101, default='')
     email = models.EmailField(max_length=101, default='')
     contact = models.CharField(max_length=101, default='')
-    createdBy = models.CharField(max_length=101, default='')
     
     class Meta:
         ordering = ['created']
 
-    def __repr__(self):
-        return str(self.to_dict())

@@ -11,8 +11,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 
-from .models import Site, Booking, SiteImages
-from .serializers import SiteSerializer, BookingSerializer, ImagePathsSerializer
+from .models import Site, Booking, SiteImages, SitePricing
+from .serializers import SiteSerializer, BookingSerializer, ImagePathsSerializer, SitePricingSerializer
 from sites.tasks import process_data
 import googlemaps
 
@@ -49,25 +49,36 @@ class SitesSearchView(APIView):
         serializer = SiteSerializer(queryset, many=True)
 
         return Response(serializer.data)
-        
-class BookingAPIView(APIView):
+
+
+class SitePricingAPIView(APIView):
     def get(self, request, pk=None):
         if pk is not None:
-            booking = Booking.objects.get(pk=pk)
-            serializer = BookingSerializer(booking)
+            pricing = SitePricing.objects.get(pk=pk)
+            serializer = SitePricingSerializer(pricing)
             return Response(serializer.data)
         
-        booking = Booking.objects.all()
-        serializer = BookingSerializer(booking, many=True)
+        pricing = SitePricing.objects.all()
+        serializer = SitePricingSerializer(pricing, many=True)
         return Response(serializer.data)
     
     def post(self, request):
         data = request.data
-        serializer = BookingSerializer(data=request.data)
+        serializer = SitePricingSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class PriceFetchSite(APIView):
+    def get(self, request):
+        searchText = request.query_params.get('siteTag')
+        pricing = SitePricing.objects.filter(site_id=searchText)
+        
+        serializer = SitePricingSerializer(pricing, many=True)
+        
+        return Response(serializer.data)
 
 
 class PPTUploadView(APIView):    
@@ -125,24 +136,104 @@ class PPTUploadView(APIView):
 
 
 class ImageView(APIView):
-    def get(self, request, format=None):
+    parser_classes = [MultiPartParser]
+
+    def get(self, request, pk=None):
+        
+        if pk is not None:
+            image = SiteImages.objects.get(pk=pk)
+            serializer = ImagePathsSerializer(image)
+            image_data = None
+            print(serializer.data["path"])
+            with open(serializer.data["path"], 'rb') as f:
+                image_data = f.read()
+            response = HttpResponse(content_type='image/jpeg')
+            response.write(image_data)
+            print("response",response)
+            return response
+    
+        images = SiteImages.objects.all()
+        serializer = ImagePathsSerializer(images, many=True)
+        return Response(serializer.data)
+    
+    
+    def post(self, request, format=None):
+        image_file = request.FILES.get('image')
+        siteName = request.data.get('siteName')
+        siteTag = request.data.get('siteTag')
+        
+        if image_file is None:
+            return Response({'error': 'No file uploaded'}, status=400)
+
         images_folder = os.path.join(settings.STATIC_ROOT, 'ppt_images')
+        
         if not os.path.exists(images_folder):
-            return Response({'error': 'Images folder not found'}, status=404)
+            os.makedirs(images_folder)
 
-        image_data = []
-        for filename in os.listdir(images_folder):
-            if filename.lower().endswith(('.jpg', '.jpeg', '.png', '.gif')):
-                image_path = os.path.join(images_folder, filename)
-                with open(image_path, 'rb') as f:
-                    image_data.append(f.read())
+        image_filename = os.path.join(images_folder, siteName + ".jpeg")
+        image_bytes = image_file.read()
+        with open(image_filename, 'wb') as f:
+            f.write(image_bytes)
+                    
+        serializer = ImagePathsSerializer(data={"siteName": siteName, "path": image_filename, "site":siteTag})
+        if serializer.is_valid():
+            serializer.save()
+            return Response({"siteName": siteName, "path": image_filename, "site":siteTag})
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class ImagesSearchView(APIView):
+    def get(self, request):
+        searchText = request.query_params.get('searchText')
+        queryset = SiteImages.objects.filter(
+            Q(siteName__icontains=searchText)
+        )
 
+        serializer = ImagePathsSerializer(queryset, many=True)
+        
+        return Response(serializer.data)
+
+class BookingAPIView(APIView):
+    def get(self, request, pk=None):
+        if pk is not None:
+            booking = Booking.objects.get(pk=pk)
+            serializer = BookingSerializer(booking)
+            return Response(serializer.data)
+        
+        booking = Booking.objects.all()
+        serializer = BookingSerializer(booking, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request):
+        data = request.data
+        serializer = BookingSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class BookingByCustomer(APIView):
+    def get(self, request):
+        searchText = request.query_params.get('customerID')
+        queryset = Booking.objects.get(assigned_to=searchText)
+        serializer = BookingSerializer(queryset, many=True)
+        return Response(serializer.data)
+
+class ImagesFetchSiteTagView(APIView):
+    def get(self, request):
+        searchText = request.query_params.get('siteTag')
+
+        queryset = SiteImages.objects.get(site_id=searchText)
+        
+        serializer = ImagePathsSerializer(queryset)
+        print(serializer.data)
+        image_data = None    
+        with open(serializer.data["path"], 'rb') as f:
+            image_data = f.read()
         response = HttpResponse(content_type='image/jpeg')
-        for data in image_data:
-            response.write(data)
-
+        response.write(image_data)
         return response
-
+        
 
 
 class GetPlacesGoogle(APIView):

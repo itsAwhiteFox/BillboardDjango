@@ -13,18 +13,15 @@ class Site(models.Model):
     size_height = models.IntegerField()
     site_lat = models.DecimalField(max_digits=9, decimal_places=6, default=0)
     site_long = models.DecimalField(max_digits=9, decimal_places=6, default=0)
-
-    def __repr__(self):
-        return str(self.to_dict())
+    created = models.DateTimeField(auto_now_add=True)
+    
 
 class SitePricing(models.Model):
-    site = models.ForeignKey(Site, on_delete=models.RESTRICT, blank = True, null = True, to_field='siteTag')
+    site = models.OneToOneField(Site, on_delete=models.RESTRICT, blank = True, null = True, to_field='siteTag')
     cost_monthly = models.IntegerField()
     printing_cost = models.IntegerField()
     mounting_cost = models.IntegerField()
-
-    def __repr__(self):
-        return str(self.to_dict())
+    created = models.DateTimeField(auto_now_add=True)
 
 class Booking(models.Model):
     site = models.ForeignKey(Site, on_delete=models.RESTRICT, blank = True, null = True, to_field='siteTag')
@@ -33,18 +30,14 @@ class Booking(models.Model):
     assigned_to = models.ForeignKey(Customer, on_delete=models.RESTRICT, blank = True, null = True)
     applicablePrice = models.IntegerField()
     salesPrice = models.IntegerField()
-    bookedBy = models.ForeignKey(CustomUser, on_delete=models.RESTRICT, blank = True, null = True)
-
-    def __repr__(self):
-        return str(self.to_dict())
+    created = models.DateTimeField(auto_now_add=True)
+    
 
 class SiteImages(models.Model):
-    site = models.ForeignKey(Site, on_delete=models.RESTRICT, blank = True, null = True, to_field='siteTag')
+    site = models.OneToOneField(Site, on_delete=models.RESTRICT, blank = True, null = True, to_field='siteTag')
     siteName = models.CharField(max_length=200)
     path = models.CharField(max_length = 500)    
-
-    def __repr__(self):
-        return str(self.to_dict())
+    created = models.DateTimeField(auto_now_add=True)
 
 class SiteGoogleStats(models.Model):
     site = models.ForeignKey(Site, on_delete=models.RESTRICT, blank = True, null = True, to_field='siteTag')
@@ -55,6 +48,4 @@ class SiteGoogleStats(models.Model):
     latitude = models.DecimalField(max_digits=24, decimal_places=21,default=0)
     longitude = models.DecimalField(max_digits=24, decimal_places=21,default=0)
     place_id = models.CharField(max_length = 200)    
-    
-    def __repr__(self):
-        return str(self.to_dict())
+    created = models.DateTimeField(auto_now_add=True)
