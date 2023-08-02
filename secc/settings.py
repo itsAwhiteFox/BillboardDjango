@@ -6,8 +6,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-yj)-pf+ar0fn)v1_nzfz&-y4f+wluyoow7(d^tz&y@%z!**x2t'
 
 DEBUG = True
-
-ALLOWED_HOSTS = []
+CORS_ORIGIN_ALLOW_ALL = True
+ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'users.CustomUser'
 
@@ -42,8 +42,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'secc.urls'
-
-CORS_ALLOWED_ORIGINS = ['http://127.0.0.1:5173']
 
 TEMPLATES = [
     {
