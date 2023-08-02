@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Site, Booking, SiteImages, SitePricing
+from .models import Site, Booking, SiteImages, SitePricing, SiteGoogleStats
 
 class SiteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -23,4 +23,9 @@ class PPTSerializer(serializers.Serializer):
 class ImagePathsSerializer(serializers.ModelSerializer):
     class Meta:
         model = SiteImages
+        fields = '__all__'
+
+class GooglePlacesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = SiteGoogleStats
         fields = '__all__'

@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.urls import include, path
-from sites.views import SitesAPIView, BookingAPIView, PPTUploadView, ImageView, GetPlacesGoogle, PlaceDetailAPI, SitesSearchView, ImagesSearchView, SitePricingAPIView, ImagesFetchSiteTagView, PriceFetchSite
+from sites.views import SitesAPIView, BookingAPIView, PPTUploadView, ImageView, GetPlacesGoogle, PlaceDetailAPI, SitesSearchView, ImagesSearchView, SitePricingAPIView, ImagesFetchSiteTagView, PriceFetchSite, GooglePlacesAPIView
 from customers.views import CustomersAPIView, CustomerSearchView
 from users.views import UsersAPIView, TokenAPIView
 from django.conf.urls.static import static
@@ -24,7 +24,7 @@ urlpatterns = [
     path('getImages/<int:pk>/', ImageView.as_view()),
     path('getImages/', ImageView.as_view()),
     path('uploadImage/', ImageView.as_view()),
-    path('getGooglePlaces/', GetPlacesGoogle.as_view()),
+    path('getGooglePlaces/', GooglePlacesAPIView.as_view()),
     path('getPlaceDetail/', PlaceDetailAPI.as_view()),
     path('images/search/', ImagesSearchView.as_view()),
     path('images/searchTag/', ImagesFetchSiteTagView.as_view()),

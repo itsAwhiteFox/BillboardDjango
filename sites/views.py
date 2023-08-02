@@ -11,10 +11,18 @@ from rest_framework.response import Response
 from rest_framework import status
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 
-from .models import Site, Booking, SiteImages, SitePricing
-from .serializers import SiteSerializer, BookingSerializer, ImagePathsSerializer, SitePricingSerializer
+from .models import Site, Booking, SiteImages, SitePricing, SiteGoogleStats
+from .serializers import SiteSerializer, BookingSerializer, ImagePathsSerializer, SitePricingSerializer, GooglePlacesSerializer
 from sites.tasks import process_data
 import googlemaps
+
+class GooglePlacesAPIView(APIView):
+    def get(self, request):
+        searchText = request.query_params.get('siteTag')
+        pricing = SiteGoogleStats.objects.filter(site_id=searchText)
+        serializer = GooglePlacesSerializer(pricing, many=True)        
+        return Response(serializer.data)
+
 
 class SitesAPIView(APIView):
     def get(self, request, pk=None):
@@ -40,7 +48,6 @@ class SitesAPIView(APIView):
 
 class SitesSearchView(APIView):
     def get(self, request):
-
         searchText = request.query_params.get('searchText')
         print("searchText", searchText)
         queryset = Site.objects.filter(
