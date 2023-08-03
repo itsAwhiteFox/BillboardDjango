@@ -19,8 +19,8 @@ import googlemaps
 class GooglePlacesAPIView(APIView):
     def get(self, request):
         searchText = request.query_params.get('siteTag')
-        pricing = SiteGoogleStats.objects.filter(site_id=searchText)
-        serializer = GooglePlacesSerializer(pricing, many=True)        
+        sitesData = SiteGoogleStats.objects.filter(site_id=searchText)
+        serializer = GooglePlacesSerializer(sitesData, many=True)        
         return Response(serializer.data)
 
 
