@@ -17,17 +17,20 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+
+    'corsheaders',
     'django.contrib.staticfiles',
     
     #third party libraries
+    
     'rest_framework',
     'rest_framework.authtoken',
-    'corsheaders',
+    
 
     #installed apps
+    'customers',
     'users',
     'sites',
-    'customers',
 ]
 
 MIDDLEWARE = [
@@ -42,6 +45,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'secc.urls'
+
+AUTH_USER_MODEL = 'users.CustomUser'
 
 TEMPLATES = [
     {
@@ -84,6 +89,19 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+               'rest_framework.authentication.TokenAuthentication',
+    ),
+    
+    'DEFAULT_PERMISSION_CLASSES': (
+        'rest_framework.permissions.IsAuthenticated',
+    ),
+
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+}
+
 LANGUAGE_CODE = 'en-us'
 
 TIME_ZONE = 'UTC'
@@ -96,5 +114,3 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-DRAMATIQ_BROKER = 'dramatiq.brokers.memory.InMemoryBroker'

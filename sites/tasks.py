@@ -1,9 +1,7 @@
-import dramatiq
 import googlemaps
 import time
-from .models import SiteGoogleStats, Site
+from .models import GoogleStats, Site
 
-@dramatiq.actor
 def process_data(data):
     list = ["atm", "bank", "beauty_salon", "cafe", "convenience_store", "department_store", "gym", "hospital", "park", "restaurant", "school", "shopping_mall", "supermarket"]
     location = str(data["site_lat"])+","+str(data["site_long"])
@@ -52,7 +50,7 @@ def process_data(data):
 
         for place in results:
             
-            SiteGoogleStats.objects.create(
+            GoogleStats.objects.create(
                 site = siteInstance,
                 type =item,
                 name = place['name'],
