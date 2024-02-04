@@ -31,6 +31,7 @@ INSTALLED_APPS = [
     'customers',
     'users',
     'sites',
+    'seccdata'
 ]
 
 MIDDLEWARE = [

@@ -2,6 +2,7 @@ from django.urls import include, path
 from sites.views import get_bookings_by_customer, post_booking, get_self_bookings, get_site_images, upload_image_data, images_from_ppt, post_site_pricing, get_site_price, post_new_site, site_search_view, get_site_detail, get_sites_list, post_state_entities, get_state_entities, get_all_bookings, get_nearby_assets
 from customers.views import customer_detail, customer_list, create_customer, search_customer
 from users.views import users_list, user_detail, staff_list, reset_password
+from seccdata.views import search_area, create_area, region_list
 from django.conf.urls.static import static
 from django.conf import settings
 from rest_framework.authtoken.views import obtain_auth_token
@@ -9,6 +10,9 @@ from rest_framework.authtoken.views import obtain_auth_token
 urlpatterns = [
     path('api-auth/', include('rest_framework.urls')),
     path('gettoken/', obtain_auth_token),
+    path('uploadSECCData/', create_area),
+    path('getSECCData/', search_area),
+    path('getRegions/', region_list),
     path('users/', users_list),
     path('userDetail/', user_detail),
     path('resetPassword/',reset_password),

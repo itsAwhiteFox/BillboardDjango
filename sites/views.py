@@ -148,18 +148,20 @@ def post_site_pricing(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdminUser])
-@parser_classes(MultiPartParser)
+@parser_classes([MultiPartParser])
 def images_from_ppt(request):
+    print(request, "Presentation Object")
     ppt_file = request.FILES.get('ppt_file')
     if ppt_file is None:
         return Response({'error': 'No file uploaded'}, status=400)
-
+    
     images_folder = os.path.join(settings.STATIC_ROOT, 'ppt_images')
     
     if not os.path.exists(images_folder):
         os.makedirs(images_folder)
 
     presentation = Presentation(ppt_file)
+    
     sitesUploaded = []
     slideNotUploaded = []
     index = 0
@@ -264,8 +266,6 @@ def get_self_bookings(request):
     booking = Booking.objects.filter(assigned_to=company)
     serializer = BookingSerializer(booking, many=True)
     return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
-
-
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdminUser])
