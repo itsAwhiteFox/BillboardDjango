@@ -13,7 +13,18 @@ def customer_detail(request):
     #company = user.company.code    
     serializer = CustomerSerializer(user.company)
     return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
-    
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def customer_detail_by_code(request, pk):
+    company = Customer.objects.get(pk = pk)    
+    serializer = CustomerSerializer(company)
+    return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
+
+
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def customer_list(request):

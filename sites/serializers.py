@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Site, Booking, SiteImages, SitePricing, GoogleStats, StateEntities, IndiaGrid
+from .models import Site, Booking, SiteImages, SitePricing, GoogleStats, StateEntities, IndiaGrid, GoogleTrafficStats
 
 class StateEntitiesSerializer(serializers.ModelSerializer):
     class Meta:
@@ -39,3 +39,9 @@ class GooglePlacesSerializer(serializers.ModelSerializer):
     class Meta:
         model = GoogleStats
         fields = '__all__'
+
+class GoogleTrafficSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GoogleTrafficStats
+        fields = '__all__'
+

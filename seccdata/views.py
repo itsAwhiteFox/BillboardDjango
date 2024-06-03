@@ -27,6 +27,27 @@ def search_area(request):
         serializer = SECCSerializer(queryset, many=True)
         return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def stateSECCData(request):
+        searchText = request.query_params.get('searchText')
+        queryset = SeccData.objects.filter(State=searchText) 
+        serializer = SECCSerializer(queryset, many=True)
+        return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def districtSECCData(request):
+        searchText = request.query_params.get('searchText')
+        stateText = request.query_params.get('stateText')
+        queryset = SeccData.objects.filter(State=stateText, District=searchText) 
+        serializer = SECCSerializer(queryset, many=True)
+        return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
+
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def region_list(request):

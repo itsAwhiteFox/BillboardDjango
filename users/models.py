@@ -35,3 +35,9 @@ class CustomUser(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return f"{self.email} {self.is_staff}"
+
+
+class UserImages(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.RESTRICT, blank = True, null = True, to_field='email')
+    path = models.CharField(max_length = 500)    
+    created = models.DateTimeField(auto_now_add=True)

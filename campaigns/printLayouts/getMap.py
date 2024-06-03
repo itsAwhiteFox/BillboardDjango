@@ -1,0 +1,2 @@
+def getMapImage(data):
+    pass

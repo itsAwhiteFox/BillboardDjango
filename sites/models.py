@@ -63,3 +63,14 @@ class IndiaGrid(models.Model):
     minLong = models.DecimalField(max_digits=24, decimal_places=20)
     maxLat = models.DecimalField(max_digits=24, decimal_places=20)
     maxLong = models.DecimalField(max_digits=24, decimal_places=20)
+
+class GoogleTrafficStats(models.Model):
+    site = models.ForeignKey(Site, on_delete=models.RESTRICT, blank = True, null = True, to_field='siteTag')
+    latitude_1 = models.DecimalField(max_digits=24, decimal_places=20,default=0)
+    longitude_1 = models.DecimalField(max_digits=24, decimal_places=20,default=0)
+    latitude_2 = models.DecimalField(max_digits=24, decimal_places=20,default=0)
+    longitude_2 = models.DecimalField(max_digits=24, decimal_places=20,default=0)
+    distance = models.DecimalField(max_digits=10, decimal_places=2,default=0)
+    traffic_time = models.DecimalField(max_digits=10, decimal_places=2,default=0)
+    average_time = models.DecimalField(max_digits=10, decimal_places=2,default=0)
+    created = models.DateTimeField(auto_now_add=True)

@@ -1,8 +1,8 @@
 import os
 import uuid
 import math
-from datetime import datetime
 import base64
+from datetime import datetime
 import time
 import requests
 from pptx import Presentation
@@ -24,13 +24,21 @@ import googlemaps
 
 
 
+
+# class GooglePlacesAPIView(APIView):
+#     def get(self, request):
+#         searchText = request.query_params.get('siteTag')
+#         sitesData = SiteGoogleStats.objects.filter(site_id=searchText)
+#         serializer = GooglePlacesSerializer(sitesData, many=True)
+#         return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_india_grid(request):
     grid = IndiaGrid.objects.all()
     serializer = IndiaGridSerializer(grid, many=True)
     return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
-
 
 
 @api_view(['POST'])
@@ -66,7 +74,6 @@ def post_state_entities(request):
     return Response({"success":False, "data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_site_detail(request, pk):
@@ -86,7 +93,6 @@ def get_sites_list(request):
     return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
 
 
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def post_new_site(request):
@@ -94,14 +100,13 @@ def post_new_site(request):
     data["siteTag"] = str(uuid.uuid4())
     if float(data["site_lat"]) < 8.4 or float(data["site_lat"]) > 37.6 or float(data["site_long"]) > 97.3 or float(data["site_long"]) < 68.7:
         Response({"success":False, "data":"Latitude and/or Longitude out of bounds"}, status=status.HTTP_400_BAD_REQUEST)
-    data["grid"] = str(math.ceil((float(data["site_lat"])-8.4)/.01))+"_"+str(math.ceil((float(data["site_long"])-68.7)/.01))
+    data["grid"] = str(math.ceil((float(data["site_lat"])-8.4)/.05))+"_"+str(math.ceil((float(data["site_long"])-68.7)/.05))
     serializer = SiteSerializer(data = data)
     if serializer.is_valid():
         serializer.save()
         # process_data(data)
         return Response({"success":True, "data":serializer.data}, status=status.HTTP_201_CREATED)
     return Response({"success":False, "data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
 
 
 @api_view(['GET'])
@@ -117,7 +122,6 @@ def site_search_view(request):
     return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
 
 
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_site_price(request):
@@ -125,27 +129,23 @@ def get_site_price(request):
     try:
         pricing = SitePricing.objects.get(site=siteTag)
     except ObjectDoesNotExist:
-        return Response({"success":False, "data":"No Pricing Found"}, status=status.HTTP_400_BAD_REQUEST)    
+        return Response({"success":False, "data":"No Pricing Found"}, status=status.HTTP_400_BAD_REQUEST)
     serializer = SitePricingSerializer(pricing)
     return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
 
 
-
 @api_view(['POST'])
-@permission_classes([IsAuthenticated, IsAdminUser])    
+@permission_classes([IsAuthenticated, IsAdminUser])
 def post_site_pricing(request):
     data = request.data
-    
+
     serializer = SitePricingSerializer(data=data)
-    
+
     if serializer.is_valid():
         serializer.save()
         return Response({"success":True, "data":serializer.data}, status=status.HTTP_201_CREATED)
     print(serializer.errors, "errors")
     return Response({"success":False, "data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
-
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated, IsAdminUser])
@@ -165,6 +165,7 @@ def edit_site_pricing(request):
 
 
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 @parser_classes([MultiPartParser])
@@ -173,14 +174,14 @@ def images_from_ppt(request):
     ppt_file = request.FILES.get('ppt_file')
     if ppt_file is None:
         return Response({'error': 'No file uploaded'}, status=400)
-    
+
     images_folder = os.path.join(settings.STATIC_ROOT, 'ppt_images')
-    
+
     if not os.path.exists(images_folder):
         os.makedirs(images_folder)
 
     presentation = Presentation(ppt_file)
-    
+
     sitesUploaded = []
     slideNotUploaded = []
     index = 0
@@ -190,11 +191,11 @@ def images_from_ppt(request):
         for shape in slide.shapes:
             if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
                 image = shape.image
-            
+
             if shape.has_text_frame:
                 if not text:
                     text = shape.text_frame.text.strip()
-                
+
         if image and text:
             try:
                 image_filename = os.path.join(images_folder, text+".jpeg")
@@ -208,20 +209,67 @@ def images_from_ppt(request):
         elif not image or not text:
             if not image:
                 slideNotUploaded.append("Slide " + str(index) + " not uploaded as image not there")
-            if not text: 
+            if not text:
                 slideNotUploaded.append("Slide " + str(index) + " not uploaded as text not there")
-        
+
         index = index+1
 
     serializer = ImagePathsSerializer(data=sitesUploaded, many=True)
     if serializer.is_valid():
-        serializer.save()
-        uploaded_ids = [image['id'] for image in serializer.data]
-        return Response({"success":True, "data":{'images': uploaded_ids, 'notUploaded':slideNotUploaded}}, status=status.HTTP_201_CREATED)
+        instances = serializer.save()
+        response_data = [{'id': instance.pk, **serializer.data[i]} for i, instance in enumerate(instances)]
+        return Response({"success":True, "data":{'images': response_data, 'notUploaded':slideNotUploaded}}, status=status.HTTP_201_CREATED)
     else:
         return Response({"success":True, "data":'some error happened'}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser])
+def get_site_images(request):
+    siteTag = request.query_params.get('siteTag')
+    print(siteTag)
+    print(SiteImages.objects.filter(site=siteTag))
+    queryset = SiteImages.objects.filter(site=siteTag).order_by('-created')[0]
+    print(queryset)
+    serializer = ImagePathsSerializer(queryset)
+    image_data = None
+    print(serializer.data["path"])
+    with open(serializer.data["path"], 'rb') as f:
+        image_data = f.read()
+    response = HttpResponse(content_type='image/jpeg')
+    response.write(image_data)
+    return response
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdminUser])
+@parser_classes([MultiPartParser])
+def get_bulk_images(request):
+    datePassed = request.query_params.get('dateSelected')
+    queryset = SiteImages.objects.filter(Q(created__date=datePassed) & (Q(site="") | Q(site__isnull=True)))
+    responses_images = []
+    for objectData in queryset:
+        serializer = ImagePathsSerializer(objectData)
+        with open(serializer.data["path"], 'rb') as f:
+            image_data = f.read()
+        responses_images.append({'image': image_data, 'otherInfo':serializer.data})
+    return HttpResponse(responses_images)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+@parser_classes([MultiPartParser])
+def get_image_id(request, pk):
+    queryset = SiteImages.objects.get(pk = pk)
+    serializer = ImagePathsSerializer(queryset)
+    image_data = None
+    print(serializer.data)
+    with open(serializer.data["path"], 'rb') as f:
+        image_data = f.read()
+    print(image_data)
+    return JsonResponse({'image':base64.b64encode(image_data).decode('utf-8'), 'otherinfo':serializer.data})
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdminUser])
@@ -235,28 +283,6 @@ def map_image_site(request):
     imageInstance.save()
     return Response({"success":True, "data":f'{siteTag} updated successfully'}, status=status.HTTP_200_OK)
 
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-@parser_classes([MultiPartParser])
-def get_site_images(request):
-    siteTag = request.query_params.get('siteTag')
-    print(siteTag)
-
-    queryset = SiteImages.objects.filter(site=siteTag)[0]
-    print(queryset)
-    serializer = ImagePathsSerializer(queryset)
-    image_data = None
-    print(serializer.data["path"])
-    with open(serializer.data["path"], 'rb') as f:
-        image_data = f.read()
-    response = HttpResponse(content_type='image/jpeg')
-    response.write(image_data)
-    return response
-
-
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 @parser_classes([MultiPartParser])
@@ -264,12 +290,12 @@ def upload_image_data(request):
     image_file = request.FILES.get('image')
     siteName = request.data.get('siteName')
     siteTag = request.data.get('siteTag')
-    
+
     if image_file is None:
         return Response({'error': 'No file uploaded'}, status=400)
 
     images_folder = os.path.join(settings.STATIC_ROOT, 'ppt_images')
-    
+
     if not os.path.exists(images_folder):
         os.makedirs(images_folder)
 
@@ -279,31 +305,13 @@ def upload_image_data(request):
     with open(image_filename, 'wb') as f:
         f.write(image_bytes)
         print("File is written")
-                
+
     serializer = ImagePathsSerializer(data={"siteName": siteName, "path": image_filename, "site":siteTag})
     if serializer.is_valid():
         serializer.save()
         return Response({"success":True, "data":{"siteName": siteName, "path": image_filename, "site":siteTag}}, status=status.HTTP_201_CREATED)
     else:
         return Response({"success":False, "data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
-
-
-@api_view(['GET'])
-@permission_classes([IsAuthenticated])
-@parser_classes([MultiPartParser])
-def get_image_id(request, pk):
-    queryset = SiteImages.objects.get(pk = pk)
-    serializer = ImagePathsSerializer(queryset)
-    image_data = None
-    print(serializer.data)
-    with open(serializer.data["path"], 'rb') as f:
-        image_data = f.read()
-    
-    print(image_data)
-    return JsonResponse({'image':base64.b64encode(image_data).decode('utf-8'), 'otherinfo':serializer.data})
-
-
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated, IsAdminUser])
@@ -312,8 +320,6 @@ def get_all_bookings(request):
     serializer = BookingSerializer(booking, many=True)
     return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
 
-
-
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_self_bookings(request):
@@ -321,8 +327,6 @@ def get_self_bookings(request):
     booking = Booking.objects.filter(assigned_to=company)
     serializer = BookingSerializer(booking, many=True)
     return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
-
-
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdminUser])
@@ -334,8 +338,6 @@ def post_booking(request):
         return Response({"success":True, "data":serializer.data}, status=status.HTTP_201_CREATED)
     return Response({"success":True, "data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
-
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated, IsAdminUser])
 def get_bookings_by_customer(request):
@@ -344,16 +346,31 @@ def get_bookings_by_customer(request):
     serializer = BookingSerializer(queryset, many=True)
     return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
 
+# class ImagesFetchSiteTagView(APIView):
+#     def get(self, request):
+#         searchText = request.query_params.get('siteTag')
+#         queryset = SiteImages.objects.get(site_id=searchText)
+#         serializer = ImagePathsSerializer(queryset)
+#         print(serializer.data)
+#         image_data = None
+#         with open(serializer.data["path"], 'rb') as f:
+#             image_data = f.read()
+#         response = HttpResponse(content_type='image/jpeg')
+#         response.write(image_data)
+#         return response
+
 
 
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_nearby_assets_db(request):
     grid = request.query_params.get('grid')
-    radius = request.query_params.get('radius', 1000)
+    radius = request.query_params.get('radius', 5000)
     dataPoints = GoogleStats.objects.filter(Q(grid=grid))
     serializer = GooglePlacesSerializer(dataPoints, many=True)
     return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
+
+
 
 
 
@@ -361,10 +378,10 @@ def get_nearby_assets_db(request):
 @permission_classes([IsAuthenticated])
 def get_nearby_assets(request):
     grid = request.query_params.get('grid')
-    radius = request.query_params.get('radius', 1000)
+    radius = request.query_params.get('radius', 5000)
     keyword = request.query_params.get('keyword')
 
-    
+
     dataPoints = GoogleStats.objects.filter(Q(grid=grid) & Q(type=keyword))
     if len(dataPoints) > 0:
         serializer = GooglePlacesSerializer(dataPoints, many=True)
@@ -373,8 +390,8 @@ def get_nearby_assets(request):
     [latSpan, longSpan] = grid.split("_")
     lat_min =  8.4
     long_min = 68.7
-    location = (lat_min+float(latSpan)*0.01-0.005, long_min+float(longSpan)*0.01-0.005)
-    
+    location = (lat_min+float(latSpan)*0.05-0.025, long_min+float(longSpan)*0.05-0.025)
+
     gmaps = googlemaps.Client("AIzaSyAmnjoE7eFekledKAqF8ctrMoNBk3w0Xm8")
     print(gmaps, "GMAPS REACHED HERE")
     places = gmaps.places_nearby(
@@ -382,7 +399,7 @@ def get_nearby_assets(request):
         radius=radius,
         keyword=keyword
     )
-    
+
     results = []
 
     for place in places['results']:
@@ -397,7 +414,7 @@ def get_nearby_assets(request):
             'place_id': place['place_id']
         }
         serializer = GooglePlacesSerializer(data = result)
-        if serializer.is_valid():        
+        if serializer.is_valid():
             serializer.save()
             results.append(result)
 
@@ -407,7 +424,7 @@ def get_nearby_assets(request):
         if "next_page_token" not in places:
             break
         else:
-            next_page_token = places["next_page_token"]  
+            next_page_token = places["next_page_token"]
         print(next_page_token, "next page token")
         places = gmaps.places_nearby(
             location=location,
@@ -429,12 +446,15 @@ def get_nearby_assets(request):
                 'place_id': place['place_id']
             }
             serializer = GooglePlacesSerializer(data = result)
-            if serializer.is_valid():        
+            if serializer.is_valid():
                 serializer.save()
                 results.append(result)
 
+
+
     return Response({"success":True, "data":results}, status=status.HTTP_200_OK)
-    
+
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_site_traffic(request):
@@ -473,6 +493,7 @@ def get_first_distance(request):
     return Response({"success":True, "data":data}, status=status.HTTP_200_OK)
 
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def start_traffic_collection(request):
@@ -505,5 +526,4 @@ def start_traffic_collection(request):
         serializer.save()
         return Response({"success":True, "data":serializer.data}, status=status.HTTP_201_CREATED)
     return Response({"success":False, "data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-
 

@@ -1,0 +1,2 @@
+def getSECCChartsImage(data):
+    pass
