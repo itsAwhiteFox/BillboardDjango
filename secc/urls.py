@@ -1,5 +1,5 @@
 from django.urls import include, path
-from sites.views import get_bookings_by_customer, post_booking, get_self_bookings, get_site_images, upload_image_data, images_from_ppt, post_site_pricing, get_site_price, post_new_site, site_search_view, get_site_detail, get_sites_list, post_state_entities, get_state_entities, get_all_bookings, get_nearby_assets, get_image_id, map_image_site, get_first_distance, start_traffic_collection
+from sites.views import get_bookings_by_customer, post_booking, get_self_bookings, get_site_images, upload_image_data, images_from_ppt, post_site_pricing, get_site_price, post_new_site, site_search_view, get_site_detail, get_sites_list, post_state_entities, get_state_entities, get_all_bookings, get_nearby_assets, get_image_id, map_image_site, get_first_distance, start_traffic_collection, get_traffic_count_collection, get_site_traffic
 from customers.views import customer_detail, customer_list, create_customer, search_customer, customer_detail_by_code
 from users.views import users_list, user_detail, staff_list, reset_password, get_user_images, upload_user_image, edit_user
 from seccdata.views import search_area, create_area, region_list, stateSECCData, districtSECCData
@@ -55,5 +55,7 @@ urlpatterns = [
     path('mapSiteImage/', map_image_site),
     path('getFirstDistance/',get_first_distance),
     path('startTrafficCollection/', start_traffic_collection),
+    path('processTrafficCount/', get_traffic_count_collection),
+    path('getAllTrafficCalculations/', get_site_traffic)    
     
 ] + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

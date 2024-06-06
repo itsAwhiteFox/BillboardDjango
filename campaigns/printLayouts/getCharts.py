@@ -1,2 +1,0 @@
-def getSECCChartsImage(data):
-    pass

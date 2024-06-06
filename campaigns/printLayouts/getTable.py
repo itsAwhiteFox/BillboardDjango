@@ -1,6 +1,7 @@
 def getTable(pdfDocument, siteData, sitePricing):
     pdfDocument.set_font('Arial', '', 14)
     pdfDocument.set_xy(300, 50)
+    
     pdfDocument.cell(100, 25, "State")
     pdfDocument.cell(150, 25, siteData['state'])
     pdfDocument.cell(100, 25, "Display cost")

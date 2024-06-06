@@ -16,6 +16,12 @@ from rest_framework import status
 from rest_framework.parsers import MultiPartParser
 from pptx.enum.shapes import MSO_SHAPE_TYPE
 from django.core.exceptions import ObjectDoesNotExist
+import requests
+import datetime
+import time
+import pytz
+import json
+
 
 from .models import Site, Booking, SiteImages, SitePricing, GoogleStats, IndiaGrid, StateEntities, GoogleTrafficStats
 from .serializers import SiteSerializer, BookingSerializer, ImagePathsSerializer, SitePricingSerializer, GooglePlacesSerializer, IndiaGridSerializer, StateEntitiesSerializer, GoogleTrafficSerializer
@@ -439,7 +445,7 @@ def get_nearby_assets(request):
 @permission_classes([IsAuthenticated])
 def get_site_traffic(request):
     siteTag = request.query_params.get('siteTag')
-    dataPoints = GoogleTrafficStats.objects.filter(Q(siteTag=siteTag))
+    dataPoints = GoogleTrafficStats.objects.filter(Q(site=siteTag))
     serializer = GoogleTrafficSerializer(dataPoints, many=True)
     return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
 
@@ -506,4 +512,75 @@ def start_traffic_collection(request):
         return Response({"success":True, "data":serializer.data}, status=status.HTTP_201_CREATED)
     return Response({"success":False, "data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 
+
+
+
+
+
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def get_traffic_count_collection(request):
+    days_of_week = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    markers = json.loads(request.body.decode('utf-8'))
+    #markers = request.body
+    print(markers, "get_traffic_count_collection")
+    outerCordinates = markers["outboundPoint"]
+    siteCoordinates = markers["siteCoord"]
+    site = markers["site"]
+    print(markers, "get_traffic_count_collection")
+    url = "https://maps.googleapis.com/maps/api/distancematrix/json"
+
+    tomorrow = datetime.date.today() + datetime.timedelta(days=1)
+    days = [tomorrow + datetime.timedelta(days=i) for i in range(7)]
+    hours = {
+             "morningPeak":[7,8,9,10,11],
+             "noonHours": [12, 14, 16], 
+             "eveningPeak":[17,18,19,20,21],
+             "nightHours":[22, 23]
+            }
+    LOCAL_TIMEZONE = pytz.timezone('Asia/Kolkata')
+    for outerMarker in outerCordinates:
+        for day in days:
+            for key, value in hours.items():
+                for hour in value:
+                    local_time = LOCAL_TIMEZONE.localize(datetime.datetime.combine(day, datetime.time(hour, 0)))
+                    dayofWeek = days_of_week[local_time.weekday()]
+                    utc_time = local_time.astimezone(pytz.utc)
+                    departure_time = int(utc_time.timestamp())
+                    url = 'https://maps.googleapis.com/maps/api/distancematrix/json'
+                    params = {
+                        'origins': f"{siteCoordinates["latitude"]},{siteCoordinates["longitude"]}",
+                        'destinations': f"{outerMarker["lat"]},{outerMarker["lng"]}",
+                        'departure_time': departure_time,
+                        'key': "AIzaSyAmnjoE7eFekledKAqF8ctrMoNBk3w0Xm8",
+                        'traffic_model': 'best_guess'
+                    }
+                    
+                    response = requests.get(url, params=params)
+                    data_parsed = response.json()
+                    print(params, "params")
+                    print(data_parsed, "params")
+                    if response.status_code == 200 and data_parsed["rows"][0]["elements"][0]["status"] != "ZERO_RESULTS":
+                        
+                        print(data_parsed, "data_parsed")
+                        data = {}
+                        data["site"] = site
+                        data["latitude_1"] = siteCoordinates["latitude"]
+                        data["longitude_1"] = siteCoordinates["latitude"]
+                        data["latitude_2"] = outerMarker["lat"]
+                        data["longitude_2"] = outerMarker["lng"]
+                        data["day"] = dayofWeek
+                        data["daySection"] = key                        
+                        data["distance"] = data_parsed["rows"][0]["elements"][0]["distance"]["value"]                
+                        data["traffic_time"] = data_parsed["rows"][0]["elements"][0]["duration_in_traffic"]["value"]
+
+                        serializer = GoogleTrafficSerializer(data = data)
+                        if serializer.is_valid():
+                            serializer.save()
+                    time.sleep(1)
+
+    return Response({"success":True, "data":"Created Successfully"}, status=status.HTTP_201_CREATED)
+    # return Response({"success":False, "data":serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
 

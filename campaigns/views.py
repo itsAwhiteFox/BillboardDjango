@@ -8,6 +8,7 @@ from .models import Campaigns
 from sites.models import Site
 from .serializers import CampaignsSerializer
 from .printLayouts.printReport import printReportData
+from django.http import HttpResponse
 
 
 @api_view(['GET'])
@@ -31,13 +32,17 @@ def print_campaign_data(request, pk):
     campaign = Campaigns.objects.get(pk=pk)
     serializer = CampaignsSerializer(campaign)
     report = printReportData(serializer.data)
-    
+    print(report, "printReportData")
+    # report.output('detailed_report.pdf')
 
     # print("serializer data", serializer.data)
     # print("raw data",campaign)
+    response = HttpResponse(report, content_type='application/pdf')
+    #response['Content-Disposition'] = 'attachment; filename="detailed_report.pdf"'
+    return response
 
 
-    return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
+    #return Response({"success":True, "data":serializer.data}, status=status.HTTP_200_OK)
 
 
 

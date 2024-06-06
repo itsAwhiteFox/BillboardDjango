@@ -1,5 +1,6 @@
 from django.forms.models import model_to_dict
 from django.db.models import Q
+from io import BytesIO
 
 from .allComponentsSlide import printSlideWithAllComponents
 from .withoutNearbyPlacesSlide import printSlideWONearbyData
@@ -19,12 +20,14 @@ class GetSiteData():
         self.sitePricing = None
         self.siteSECC = None
         self.nearByLocation = None
+        self.trafficData = None
         
         self.getSiteData()
         self.getSiteImage()
         self.getSitePricing()
         self.getGoogleStats()
         self.getSECCData()  
+        self.getTrafficData()
 
     def getSiteData(self):
         try:
@@ -66,6 +69,15 @@ class GetSiteData():
                 self.siteSECC = subDistrictData.values()
         except:
             print("error")
+
+    def getTrafficData(self):
+        try:
+            siteData = Site.objects.get(siteTag=self.siteTag)
+            if siteData:
+                self.siteDetail = model_to_dict(siteData)
+        except:
+            print("error")
+
 
 class PDF(FPDF):
 
@@ -136,6 +148,9 @@ def printReportData(campaign):
         pdf.draw_site_page(item)
     
 
-    # Output the PDF
-    pdf.output('detailed_report.pdf')
+    pdf_output = BytesIO()
+    pdf.output(pdf_output)
+
+    # Return the PDF content
+    return pdf_output.getvalue()
     

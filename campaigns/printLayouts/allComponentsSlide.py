@@ -1,2 +1,17 @@
+from .getImages import getSiteImage
+from .getTable import getTable
+from .getSECCChartGroup import getSECCChartsImage
+from .getNearByLocationChart import getNearbyPOIChartsImage
+from .getMap import getMapImage
+from .getTrafficStatsChart import getTrafficStatsChartsImage
+
+
 def printSlideWithAllComponents(pdfDocument, siteData):
-    pass
+    pdfDocument.set_font('Arial', '', 18)
+    pdfDocument.cell(500, 20, f"Site ID:   {siteData["siteDetail"]["location"]}")
+    getSiteImage(pdfDocument, siteData["siteImage"])
+    getTable(pdfDocument, siteData["siteDetail"], siteData["sitePricing"])
+    getSECCChartsImage(pdfDocument, siteData["siteDetail"])
+    getNearbyPOIChartsImage(pdfDocument, siteData["siteDetail"])
+    getMapImage(pdfDocument, siteData["siteDetail"])
+    getTrafficStatsChartsImage(pdfDocument, siteData["siteDetail"])

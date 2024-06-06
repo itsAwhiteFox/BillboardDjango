@@ -8,8 +8,7 @@ def getSiteImage(pdfDocument, data):
         try:
             if os.path.exists(image_path):
                 pdfDocument.image(image_path, x=20, y=50, w=250, h=160)
-                pdfDocument.image(image_path, x=20, y=230, w=250, h=160)
-                pdfDocument.image(image_path, x=20, y=410, w=250, h=160)
+                
                 print(image_path, "getSiteImage")
             else:
                 print(f"Image file not found: {image_path}")

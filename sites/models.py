@@ -71,6 +71,7 @@ class GoogleTrafficStats(models.Model):
     latitude_2 = models.DecimalField(max_digits=24, decimal_places=20,default=0)
     longitude_2 = models.DecimalField(max_digits=24, decimal_places=20,default=0)
     distance = models.DecimalField(max_digits=10, decimal_places=2,default=0)
+    day = models.CharField(max_length=20)
+    daySection = models.CharField(max_length=20)
     traffic_time = models.DecimalField(max_digits=10, decimal_places=2,default=0)
-    average_time = models.DecimalField(max_digits=10, decimal_places=2,default=0)
     created = models.DateTimeField(auto_now_add=True)
