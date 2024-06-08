@@ -11,6 +11,6 @@ def printSlideWONearbyData(pdfDocument, siteData):
     pdfDocument.cell(500, 20, f"Site ID:   {siteData["siteDetail"]["location"]}")
     getSiteImage(pdfDocument, siteData["siteImage"])
     getTable(pdfDocument, siteData["siteDetail"], siteData["sitePricing"])
-    getSECCChartsImage(pdfDocument, siteData["siteDetail"])
+    getSECCChartsImage(pdfDocument, siteData["seccData"], "full")
     getMapImage(pdfDocument, siteData["siteDetail"])
-    getTrafficStatsChartsImage(pdfDocument, siteData["siteDetail"])
+    getTrafficStatsChartsImage(pdfDocument, siteData["trafficData"])

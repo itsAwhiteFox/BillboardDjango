@@ -5,7 +5,7 @@ from io import BytesIO
 from .allComponentsSlide import printSlideWithAllComponents
 from .withoutNearbyPlacesSlide import printSlideWONearbyData
 from .withoutTrafficComponentSlide import printSlideWOTrafficData
-from .allComponentsSlide import printSlideWithAllComponents
+from .withoutAnyGoogleDataSlide import printPageWOAnyGoogleData
 
 from sites.models import Site, SitePricing, SiteImages, GoogleStats, GoogleTrafficStats
 from seccdata.models import SeccData
@@ -21,13 +21,15 @@ class GetSiteData():
         self.siteSECC = None
         self.nearByLocation = None
         self.trafficData = None
-        
+        self.siteSlideType = "woGoolgeData"
+
         self.getSiteData()
         self.getSiteImage()
         self.getSitePricing()
         self.getGoogleStats()
         self.getSECCData()  
         self.getTrafficData()
+        self.getSlideType()
 
     def getSiteData(self):
         try:
@@ -72,11 +74,22 @@ class GetSiteData():
 
     def getTrafficData(self):
         try:
-            siteData = Site.objects.get(siteTag=self.siteTag)
+            siteData = GoogleTrafficStats.objects.filter(Q(site=self.siteTag))
             if siteData:
-                self.siteDetail = model_to_dict(siteData)
+                self.trafficData = model_to_dict(siteData)
         except:
             print("error")
+
+    def getSlideType(self):
+        if(self.nearByLocation and self.trafficData):
+            self.siteSlideType = "allComponentSlide" 
+        elif(not self.nearByLocation and self.trafficData):
+            self.siteSlideType = "woNearbyPlaces" 
+        elif(self.nearByLocation and not self.trafficData):
+            self.siteSlideType = "woTrafficData"
+        elif(not self.nearByLocation and not self.trafficData): 
+            self.siteSlideType = "woGoolgeData"
+
 
 
 class PDF(FPDF):
@@ -98,12 +111,17 @@ class PDF(FPDF):
                 self.ln(row_height)
                 i=i+1
     
-    def draw_site_page(self, data, siteType="woGoogleData"):
+    def draw_site_page(self, data):
         self.set_font('Arial', '', 16)
-        printSlideWOTrafficData(self, data)
-        #self.cell(100, 20, data)
+        if data["slideType"] == "allComponentSlide":
+            printSlideWithAllComponents(self, data)
+        if data["slideType"] == "woNearbyPlaces":
+            printSlideWONearbyData(self, data)
+        if data["slideType"] == "woTrafficData":
+            printSlideWOTrafficData(self, data)
+        if data["slideType"] == "woGoolgeData":
+            printPageWOAnyGoogleData(self, data)
 
-        
 
     def draw_table_from_list(self, data, column_widths, row_height=20, x_offset=0, y_offset=0):
         self.set_font('Arial', 'B', 12)
@@ -126,11 +144,13 @@ def printReportData(campaign):
     for item in sites:
         siteObject = GetSiteData(item)
         siteDetails.append({
+                            "slideType" : siteObject.siteSlideType,
                             "siteDetail": siteObject.siteDetail, 
                             "siteImage": siteObject.siteImage,
                             "sitePricing": siteObject.sitePricing,
                             "nearByLocations": siteObject.nearByLocation,
-                            "seccData": siteObject.siteSECC    
+                            "seccData": siteObject.siteSECC,
+                            "trafficData":siteObject.trafficData    
                             })
 
 

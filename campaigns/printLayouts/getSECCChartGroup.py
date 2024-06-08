@@ -16,7 +16,7 @@ def create_pie_chart(data, colors):
     return img_bytes
 
 
-def getSECCChartsImage(pdfDocument, data):
+def getSECCChartsImage(pdfDocument, data, size = "normal"):
     pdfDocument.set_font('Arial', '', 9)
     colors = [
     "#f0f0f0",  # Light Gray
@@ -36,11 +36,18 @@ def getSECCChartsImage(pdfDocument, data):
     colorsPassed = colors[0:len(data1)]
 
     img_bytes = create_pie_chart(data1, colorsPassed)
-    pdfDocument.image(img_bytes, x=20, y=210, w=170, h=150)
-    pdfDocument.image(img_bytes, x=190, y=210, w=170, h=150)
-    pdfDocument.image(img_bytes, x=360, y=210, w=170, h=150)
+    if size == "normal":
+        pdfDocument.image(img_bytes, x=20, y=210, w=170, h=150)
+        pdfDocument.image(img_bytes, x=190, y=210, w=170, h=150)
+        pdfDocument.image(img_bytes, x=360, y=210, w=170, h=150)    
+        pdfDocument.set_xy((520-len(data1)*60)/2, 360)
+
+    if size == "full":
+        pdfDocument.image(img_bytes, x=20, y=210, w=250, h=150)
+        pdfDocument.image(img_bytes, x=270, y=210, w=250, h=150)
+        pdfDocument.image(img_bytes, x=520, y=210, w=250, h=150)    
+        pdfDocument.set_xy((750-len(data1)*60)/2, 360)
     
-    pdfDocument.set_xy((520-len(data1)*60)/2, 360)
     for index, item in enumerate(labels):
         pdfDocument.set_fill_color(colorsPassed[index])
         pdfDocument.cell(10, 10, "", fill=True)
