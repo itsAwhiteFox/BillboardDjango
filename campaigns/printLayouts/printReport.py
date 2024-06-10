@@ -61,6 +61,7 @@ class GetSiteData():
             siteData = GoogleStats.objects.filter(grid=self.siteDetail["grid"])
             if siteData:
                 self.nearByLocation = siteData.values()
+                pass
         except:
             print("error")
 
@@ -75,8 +76,9 @@ class GetSiteData():
     def getTrafficData(self):
         try:
             siteData = GoogleTrafficStats.objects.filter(Q(site=self.siteTag))
+            print(siteData, "getTrafficData")
             if siteData:
-                self.trafficData = model_to_dict(siteData)
+                self.trafficData = siteData.values()
         except:
             print("error")
 

@@ -4,8 +4,11 @@ matplotlib.use('Agg')  # Set the backend to Agg (non-interactive)
 import matplotlib.pyplot as plt
 from io import BytesIO
 
-def create_pie_chart(data, colors):
-    plt.figure(figsize=(3,3))
+def create_pie_chart(data, colors, size):
+    if size == "normal":
+        plt.figure(figsize=(3,3))
+    else:
+        plt.figure(figsize=(4,3))
     plt.pie(data, autopct='%1.1f%%', startangle=90, colors=colors)
     plt.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
     
@@ -31,22 +34,40 @@ def getSECCChartsImage(pdfDocument, data, size = "normal"):
     "#e0ffff"   # Light Cyan
     ]
     
-    data1 = [30, 30, 40]
-    labels = ["Label Passed 1", "Label Passed 2", "Label Passed 3"]
-    colorsPassed = colors[0:len(data1)]
+    print(data, "getSECCChartsImage")
 
-    img_bytes = create_pie_chart(data1, colorsPassed)
+    seccDataMap = {"No_HH":{}, "P_LIT":{}, "TOT_WORK_P":{}}
+    labels = []
+    for item in data:
+        seccDataMap["No_HH"] = {**seccDataMap["No_HH"], item["SubDistrict"]:item["No_HH"]}
+        seccDataMap["P_LIT"] = {**seccDataMap["P_LIT"], item["SubDistrict"]:item["P_LIT"]}
+        seccDataMap["TOT_WORK_P"] = {**seccDataMap["TOT_WORK_P"], item["SubDistrict"]:item["TOT_WORK_P"]}
+        if item["SubDistrict"] not in labels:
+            labels.append(item["SubDistrict"])
+
+    
+    colorsPassed = colors[0:len(labels)]
+
+    img_bytes_house_hold = create_pie_chart(seccDataMap["No_HH"].values(), colorsPassed, size)
+    img_bytes_literate_persons = create_pie_chart(seccDataMap["P_LIT"].values(), colorsPassed, size)
+    img_bytes_working_person = create_pie_chart(seccDataMap["TOT_WORK_P"].values(), colorsPassed, size)
     if size == "normal":
-        pdfDocument.image(img_bytes, x=20, y=210, w=170, h=150)
-        pdfDocument.image(img_bytes, x=190, y=210, w=170, h=150)
-        pdfDocument.image(img_bytes, x=360, y=210, w=170, h=150)    
-        pdfDocument.set_xy((520-len(data1)*60)/2, 360)
+        pdfDocument.image(img_bytes_house_hold, x=20, y=210, w=170, h=150)
+        pdfDocument.set_xy(20+60, 350)
+        pdfDocument.cell(50,10,"Household")
+        pdfDocument.image(img_bytes_literate_persons, x=190, y=210, w=170, h=150)
+        pdfDocument.set_xy(190+60, 350)
+        pdfDocument.cell(50,10,"Literate")
+        pdfDocument.image(img_bytes_working_person, x=360, y=210, w=170, h=150)    
+        pdfDocument.set_xy(360+60, 350)
+        pdfDocument.cell(50,10,"Working")
+        pdfDocument.set_xy((520-len(labels)*60)/2, 360)
 
     if size == "full":
-        pdfDocument.image(img_bytes, x=20, y=210, w=250, h=150)
-        pdfDocument.image(img_bytes, x=270, y=210, w=250, h=150)
-        pdfDocument.image(img_bytes, x=520, y=210, w=250, h=150)    
-        pdfDocument.set_xy((750-len(data1)*60)/2, 360)
+        pdfDocument.image(img_bytes_house_hold, x=20, y=210, w=250, h=150)
+        pdfDocument.image(img_bytes_literate_persons, x=270, y=210, w=250, h=150)
+        pdfDocument.image(img_bytes_working_person, x=520, y=210, w=250, h=150)    
+        pdfDocument.set_xy((750-len(labels)*60)/2, 360)
     
     for index, item in enumerate(labels):
         pdfDocument.set_fill_color(colorsPassed[index])
